@@ -9,6 +9,7 @@ import {
   Settings,
   Zap,
   User,
+  Trophy,
 } from "lucide-react";
 import { useGame } from "../../context/GameContext";
 import DashboardTab from "./DashboardTab";
@@ -16,6 +17,7 @@ import CategoriesTab from "./CategoriesTab";
 import QuestionsTab from "./QuestionsTab";
 import TiebreakersTab from "./TiebreakersTab";
 import SettingsTab from "./SettingsTab";
+import TournamentsTab from "./TournamentsTab";
 
 const AdminDashboard = () => {
   const { state, dispatch } = useGame();
@@ -29,27 +31,35 @@ const AdminDashboard = () => {
   };
 
   const tabs = [
-    { id: "dashboard", name: "لوحة التحكم", nameEn: "Dashboard", icon: Target },
+    { id: "dashboard", name: "لوحة التحكم", nameCkb: "داشبۆرد", icon: Target },
+    {
+      id: "tournaments",
+      name: "البطولات",
+      nameCkb: "پاڵەوێنەکان",
+      icon: Trophy,
+    },
     {
       id: "categories",
       name: "التصنيفات",
-      nameEn: "Categories",
+      nameCkb: "پۆلەکان",
       icon: BookOpen,
     },
-    { id: "questions", name: "الأسئلة", nameEn: "Questions", icon: Brain },
+    { id: "questions", name: "الأسئلة", nameCkb: "پرسیارەکان", icon: Brain },
     {
       id: "tiebreakers",
       name: "أسئلة فاصلة",
-      nameEn: "Tiebreakers",
+      nameCkb: "پرسیاری یەکلاکەرەوە",
       icon: Zap,
     },
-    { id: "settings", name: "الإعدادات", nameEn: "Settings", icon: Settings },
+    { id: "settings", name: "الإعدادات", nameCkb: "ڕێکخستنەکان", icon: Settings },
   ];
 
   const renderTabContent = () => {
     switch (currentTab) {
       case "dashboard":
         return <DashboardTab />;
+      case "tournaments":
+        return <TournamentsTab />;
       case "categories":
         return <CategoriesTab />;
       case "questions":
@@ -118,6 +128,7 @@ const AdminDashboard = () => {
               </h4>
               {tabs.map((tab) => {
                 const IconComponent = tab.icon;
+                const language = state.settings.language || "ckb";
                 return (
                   <div
                     key={tab.id}
@@ -128,9 +139,9 @@ const AdminDashboard = () => {
                   >
                     <IconComponent size={20} />
                     <div>
-                      <div>{tab.name}</div>
+                      <div>{language === "ckb" ? tab.nameCkb : tab.name}</div>
                       <div style={{ fontSize: "12px", opacity: 0.7 }}>
-                        {tab.nameEn}
+                        {language === "ckb" ? tab.name : tab.nameCkb}
                       </div>
                     </div>
                   </div>

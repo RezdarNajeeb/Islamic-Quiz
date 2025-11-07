@@ -38,6 +38,9 @@ export const GameProvider = ({ children }) => {
       if (savedData.settings) {
         dispatch({ type: "UPDATE_SETTINGS", payload: savedData.settings });
       }
+      if (savedData.tournaments) {
+        dispatch({ type: "SET_TOURNAMENTS", payload: savedData.tournaments });
+      }
     }
   }, []);
 
@@ -49,6 +52,7 @@ export const GameProvider = ({ children }) => {
       tiebreakers: state.tiebreakers,
       gameStats: state.gameStats,
       settings: state.settings,
+      tournaments: state.tournaments,
     };
     saveToLocalStorage(dataToSave);
   }, [
@@ -57,6 +61,7 @@ export const GameProvider = ({ children }) => {
     state.tiebreakers,
     state.gameStats,
     state.settings,
+    state.tournaments,
   ]);
 
   const value = {

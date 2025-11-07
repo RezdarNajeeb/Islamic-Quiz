@@ -18,13 +18,27 @@ import {
 const GameScreen = () => {
   const { state, dispatch } = useGame();
   const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const language = state.settings.language || "ckb";
+
+  // Check if we're in tournament mode
+  const isTournamentMode = !!state.currentTournamentGame;
+  const tournamentQuestionIds = state.currentTournamentGame?.questionIds || [];
 
   const getAvailableQuestionsForCategory = (categoryId) => {
-    return getAvailableQuestions(
+    let availableQuestions = getAvailableQuestions(
       state.questions,
       categoryId,
       state.usedQuestions
     );
+
+    // If in tournament mode, filter to only assigned questions
+    if (isTournamentMode && tournamentQuestionIds.length > 0) {
+      availableQuestions = availableQuestions.filter(q =>
+        tournamentQuestionIds.includes(q.id)
+      );
+    }
+
+    return availableQuestions;
   };
 
   const handleCategorySelect = (categoryId) => {
@@ -49,11 +63,7 @@ const GameScreen = () => {
 
     if (answerIndex === state.currentQuestion.correct) {
       dispatch({ type: "UPDATE_SCORE", payload: 1 });
-      dispatch({ type: "SET_CELEBRATION", payload: "🎉" });
-      setTimeout(
-        () => dispatch({ type: "SET_CELEBRATION", payload: null }),
-        2000
-      );
+      // Celebration animations removed as per requirements
     } else {
       setTimeout(() => {
         dispatch({ type: "SHOW_EXPLANATION" });
@@ -69,6 +79,28 @@ const GameScreen = () => {
   };
 
   const handleShowResults = () => {
+    // If in tournament mode, record the game results
+    if (isTournamentMode && state.currentTournamentGame) {
+      const team1Score = state.teams.team1.score;
+      const team2Score = state.teams.team2.score;
+      const winner = team1Score > team2Score ? "groupA" : team1Score < team2Score ? "groupB" : null;
+
+      dispatch({
+        type: "UPDATE_TOURNAMENT_GAME",
+        payload: {
+          tournamentId: state.currentTournamentGame.tournamentId,
+          phaseId: state.currentTournamentGame.phaseId,
+          gameId: state.currentTournamentGame.gameId,
+          gameData: {
+            status: "completed",
+            groupAScore: team1Score,
+            groupBScore: team2Score,
+            winner: winner,
+          },
+        },
+      });
+    }
+
     dispatch({ type: "SHOW_RESULTS" });
     dispatch({ type: "SET_SCREEN", payload: "results" });
   };
@@ -158,18 +190,29 @@ const GameScreen = () => {
             ) : (
               <>
                 <h3 style={{ marginBottom: "30px", textAlign: "center" }}>
-                  اختر التصنيف - Choose Category
+                  {language === "ckb"
+                    ? "پۆلێک هەڵبژێرە"
+                    : "اختر التصنيف"}
                 </h3>
 
                 <div className="grid grid-3">
                   {Object.entries(state.categories).map(([id, category]) => {
                     const availableQuestions =
                       getAvailableQuestionsForCategory(id);
-                    const totalQuestions = Object.values(
-                      state.questions
-                    ).filter((q) => q.category === id).length;
-                    const usedCount =
-                      totalQuestions - availableQuestions.length;
+
+                    // Calculate total based on tournament mode or regular mode
+                    let totalQuestions;
+                    if (isTournamentMode && tournamentQuestionIds.length > 0) {
+                      totalQuestions = Object.values(state.questions).filter(
+                        (q) => q.category === id && tournamentQuestionIds.includes(q.id)
+                      ).length;
+                    } else {
+                      totalQuestions = Object.values(state.questions).filter(
+                        (q) => q.category === id
+                      ).length;
+                    }
+
+                    const usedCount = totalQuestions - availableQuestions.length;
 
                     return (
                       <div
@@ -186,7 +229,9 @@ const GameScreen = () => {
                           <BookOpen size={24} />
                         </div>
                         <h4 style={{ margin: "15px 0 10px" }}>
-                          {category.name}
+                          {language === "ckb"
+                            ? category.nameCkb || category.name
+                            : category.name}
                         </h4>
                         <p
                           style={{
@@ -195,7 +240,9 @@ const GameScreen = () => {
                             marginBottom: "10px",
                           }}
                         >
-                          {category.nameEn}
+                          {language === "ckb"
+                            ? category.name
+                            : category.nameCkb || category.name}
                         </p>
                         <div
                           style={{
@@ -213,7 +260,8 @@ const GameScreen = () => {
                           {usedCount}/{totalQuestions}
                         </div>
                         <p style={{ fontSize: "12px", marginTop: "10px" }}>
-                          {availableQuestions.length} متبقية
+                          {availableQuestions.length}{" "}
+                          {language === "ckb" ? "ماوە" : "متبقية"}
                         </p>
                       </div>
                     );
@@ -259,14 +307,29 @@ const GameScreen = () => {
           {/* Question */}
           <div className="question-card">
             <div className="question-text">
-              {state.currentQuestion.question}
+              {/* Always show Arabic for Quran and Hadith, otherwise respect language setting */}
+              {state.currentQuestion.category === "quran" ||
+              state.currentQuestion.category === "hadith"
+                ? state.currentQuestion.question
+                : language === "ckb"
+                ? state.currentQuestion.questionCkb || state.currentQuestion.question
+                : state.currentQuestion.question}
             </div>
-            <p style={{ opacity: 0.7, marginBottom: "30px" }}>
-              {state.currentQuestion.questionEn}
-            </p>
+            {/* Show secondary language if not Quran/Hadith */}
+            {state.currentQuestion.category !== "quran" &&
+              state.currentQuestion.category !== "hadith" && (
+                <p style={{ opacity: 0.7, marginBottom: "30px" }}>
+                  {language === "ckb"
+                    ? state.currentQuestion.question
+                    : state.currentQuestion.questionCkb || state.currentQuestion.question}
+                </p>
+              )}
 
             <div className="options-grid">
-              {state.currentQuestion.options.map((option, index) => {
+              {(language === "ckb"
+                ? state.currentQuestion.optionsCkb || state.currentQuestion.options
+                : state.currentQuestion.options
+              ).map((option, index) => {
                 let className = "option-btn";
                 if (state.showAnswer) {
                   if (index === state.currentQuestion.correct) {
@@ -275,6 +338,12 @@ const GameScreen = () => {
                     className += " option-wrong";
                   }
                 }
+
+                // Get secondary language option
+                const secondaryOption =
+                  language === "ckb"
+                    ? state.currentQuestion.options[index]
+                    : state.currentQuestion.optionsCkb?.[index] || state.currentQuestion.options[index];
 
                 return (
                   <div
@@ -289,9 +358,13 @@ const GameScreen = () => {
                       <div style={{ fontWeight: "bold", marginBottom: "5px" }}>
                         {option}
                       </div>
-                      <div style={{ fontSize: "14px", opacity: 0.8 }}>
-                        {state.currentQuestion.optionsEn[index]}
-                      </div>
+                      {/* Don't show secondary language for Quran/Hadith options */}
+                      {state.currentQuestion.category !== "quran" &&
+                        state.currentQuestion.category !== "hadith" && (
+                          <div style={{ fontSize: "14px", opacity: 0.8 }}>
+                            {secondaryOption}
+                          </div>
+                        )}
                     </div>
                     {state.showAnswer &&
                       index === state.currentQuestion.correct && (
@@ -308,14 +381,22 @@ const GameScreen = () => {
             <div className="alert alert-info fade-in">
               <AlertCircle size={20} />
               <div>
-                <strong>التفسير:</strong> {state.currentQuestion.explanation}
-                {state.currentQuestion.explanationEn && (
-                  <>
-                    <br />
-                    <strong>Explanation:</strong>{" "}
-                    {state.currentQuestion.explanationEn}
-                  </>
-                )}
+                <strong>{language === "ckb" ? "ڕوونکردنەوە:" : "التفسير:"}</strong>{" "}
+                {language === "ckb"
+                  ? state.currentQuestion.explanationCkb || state.currentQuestion.explanation
+                  : state.currentQuestion.explanation}
+                {state.currentQuestion.category !== "quran" &&
+                  state.currentQuestion.category !== "hadith" && (
+                    <>
+                      <br />
+                      <strong>
+                        {language === "ckb" ? "التفسير:" : "ڕوونکردنەوە:"}
+                      </strong>{" "}
+                      {language === "ckb"
+                        ? state.currentQuestion.explanation
+                        : state.currentQuestion.explanationCkb || state.currentQuestion.explanation}
+                    </>
+                  )}
               </div>
             </div>
           )}
@@ -370,10 +451,7 @@ const GameScreen = () => {
         </div>
       </div>
 
-      {/* Celebration */}
-      {state.celebration && (
-        <div className="celebration">{state.celebration}</div>
-      )}
+      {/* Celebration removed as per requirements */}
     </div>
   );
 };

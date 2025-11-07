@@ -7,18 +7,17 @@ import { calculateGameStats } from "../../utils/dataService";
 const ResultsScreen = () => {
   const { state, dispatch } = useGame();
   const [statsUpdated, setStatsUpdated] = useState(false);
+  const language = state.settings.language || "ckb";
+  const isTournamentMode = !!state.currentTournamentGame;
 
   const gameStats = calculateGameStats(state.teams);
   const { winner, isDraw, team1Score, team2Score } = gameStats;
 
   useEffect(() => {
-    if (!statsUpdated) {
+    if (!statsUpdated && !isTournamentMode) {
+      // Only update regular game stats if not in tournament mode
       if (winner) {
-        dispatch({ type: "SET_CELEBRATION", payload: "🏆" });
-        setTimeout(
-          () => dispatch({ type: "SET_CELEBRATION", payload: null }),
-          3000
-        );
+        // Celebration animations removed as per requirements
 
         // Update game statistics
         const stats = {
@@ -37,7 +36,7 @@ const ResultsScreen = () => {
         setStatsUpdated(true);
       }
     }
-  }, [winner, isDraw, statsUpdated, dispatch, state.gameStats]);
+  }, [winner, isDraw, statsUpdated, dispatch, state.gameStats, isTournamentMode]);
 
   const handleStartTiebreaker = () => {
     dispatch({ type: "START_TIEBREAKER" });
@@ -49,7 +48,21 @@ const ResultsScreen = () => {
     setStatsUpdated(false);
   };
 
+  const handleBackToTournament = () => {
+    // Clear tournament game context
+    dispatch({ type: "SET_CURRENT_TOURNAMENT", payload: null });
+    dispatch({ type: "SET_CURRENT_TOURNAMENT_GAME", payload: null });
+    dispatch({ type: "RESET_GAME" });
+    dispatch({ type: "SET_SCREEN", payload: "tournamentSelection" });
+    setStatsUpdated(false);
+  };
+
   const handleBackToHome = () => {
+    // Clear tournament context if any
+    if (isTournamentMode) {
+      dispatch({ type: "SET_CURRENT_TOURNAMENT", payload: null });
+      dispatch({ type: "SET_CURRENT_TOURNAMENT_GAME", payload: null });
+    }
     dispatch({ type: "SET_SCREEN", payload: "home" });
     setStatsUpdated(false);
   };
@@ -63,10 +76,31 @@ const ResultsScreen = () => {
             style={{ color: "#b8860b", marginBottom: "30px" }}
           />
 
-          <h2 style={{ marginBottom: "10px" }}>نتائج المسابقة</h2>
+          <h2 style={{ marginBottom: "10px" }}>
+            {language === "ckb" ? "ئەنجامی یاری" : "نتائج المسابقة"}
+          </h2>
           <h3 style={{ color: "#666", marginBottom: "40px" }}>
-            Competition Results
+            {language === "ckb" ? "نتائج المسابقة" : "ئەنجامی یاری"}
           </h3>
+
+          {/* Tournament Mode Indicator */}
+          {isTournamentMode && (
+            <div
+              style={{
+                padding: "10px 20px",
+                background: "#fff3cd",
+                borderRadius: "10px",
+                marginBottom: "20px",
+                fontSize: "14px",
+                color: "#856404",
+              }}
+            >
+              <Trophy size={16} style={{ display: "inline", marginRight: "8px" }} />
+              {language === "ckb"
+                ? "یاری پاڵەوێنە / مباراة البطولة"
+                : "مباراة البطولة / یاری پاڵەوێنە"}
+            </div>
+          )}
 
           <div className="score-display">
             <div className={`score-card ${winner === 1 ? "winner" : ""}`}>
@@ -306,14 +340,31 @@ const ResultsScreen = () => {
               flexWrap: "wrap",
             }}
           >
-            <button className="btn" onClick={handleNewGame}>
-              <RefreshCw size={20} />
-              مسابقة جديدة - New Game
-            </button>
-            <button className="btn btn-outline" onClick={handleBackToHome}>
-              <Home size={20} />
-              العودة للرئيسية - Back Home
-            </button>
+            {isTournamentMode ? (
+              <>
+                <button className="btn" onClick={handleBackToTournament}>
+                  <Trophy size={20} />
+                  {language === "ckb"
+                    ? "گەڕانەوە بۆ پاڵەوێنە"
+                    : "العودة إلى البطولة"}
+                </button>
+                <button className="btn btn-outline" onClick={handleBackToHome}>
+                  <Home size={20} />
+                  {language === "ckb" ? "سەرەتا" : "الرئيسية"}
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="btn" onClick={handleNewGame}>
+                  <RefreshCw size={20} />
+                  {language === "ckb" ? "یاری نوێ" : "مسابقة جديدة"}
+                </button>
+                <button className="btn btn-outline" onClick={handleBackToHome}>
+                  <Home size={20} />
+                  {language === "ckb" ? "سەرەتا" : "الرئيسية"}
+                </button>
+              </>
+            )}
           </div>
 
           {/* Performance Message */}
@@ -342,10 +393,7 @@ const ResultsScreen = () => {
         </div>
       </div>
 
-      {/* Celebration */}
-      {state.celebration && (
-        <div className="celebration">{state.celebration}</div>
-      )}
+      {/* Celebration removed as per requirements */}
     </div>
   );
 };
