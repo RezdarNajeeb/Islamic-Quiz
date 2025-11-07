@@ -250,38 +250,18 @@ const SettingsTab = () => {
           }}
         >
           <div className="input-group">
-            <label>اللغة الرئيسية</label>
+            <label>زمانی سەرەکی / اللغة الرئيسية</label>
             <select
               value={settings.language}
               onChange={(e) =>
                 setSettings({ ...settings, language: e.target.value })
               }
             >
+              <option value="ckb">کوردی (سۆرانی) - Central Kurdish</option>
               <option value="ar">العربية - Arabic</option>
-              <option value="en">English - الإنجليزية</option>
-              <option value="both">Both / كلاهما</option>
             </select>
             <small style={{ color: "#666" }}>
-              اللغة المعروضة في واجهة المسابقة
-            </small>
-          </div>
-
-          <div className="input-group">
-            <label
-              style={{ display: "flex", alignItems: "center", gap: "10px" }}
-            >
-              <input
-                type="checkbox"
-                checked={settings.soundEnabled}
-                onChange={(e) =>
-                  setSettings({ ...settings, soundEnabled: e.target.checked })
-                }
-                style={{ width: "auto" }}
-              />
-              تفعيل الأصوات
-            </label>
-            <small style={{ color: "#666" }}>
-              تشغيل الأصوات للتنبيهات والإشعارات
+              زمانی پیشاندراو لە ڕووکاری پاڵەوێنەکەدا / اللغة المعروضة في واجهة المسابقة
             </small>
           </div>
         </div>

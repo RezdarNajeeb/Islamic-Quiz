@@ -24,8 +24,7 @@ export const initialGameState = {
   settings: {
     normalTimer: 120,
     tiebreakerTimer: 60,
-    language: "ar",
-    soundEnabled: true,
+    language: "ckb", // Central Kurdish as default
   },
   celebration: null,
   isTiebreaker: false,
@@ -38,6 +37,10 @@ export const initialGameState = {
     ties: 0,
   },
   showResults: false,
+  // Tournament system
+  tournaments: {},
+  currentTournament: null,
+  currentTournamentGame: null,
 };
 
 export function gameReducer(state, action) {
@@ -238,6 +241,139 @@ export function gameReducer(state, action) {
       return {
         ...state,
         tiebreakers: remainingTiebreakers,
+      };
+
+    // Tournament Management
+    case "CREATE_TOURNAMENT":
+      const tournamentId = action.payload.id || Date.now().toString();
+      return {
+        ...state,
+        tournaments: {
+          ...state.tournaments,
+          [tournamentId]: {
+            ...action.payload,
+            id: tournamentId,
+            phases: [],
+            status: "pending",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      };
+
+    case "UPDATE_TOURNAMENT":
+      return {
+        ...state,
+        tournaments: {
+          ...state.tournaments,
+          [action.payload.id]: {
+            ...state.tournaments[action.payload.id],
+            ...action.payload,
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      };
+
+    case "DELETE_TOURNAMENT":
+      const { [action.payload]: deletedTournament, ...remainingTournaments } =
+        state.tournaments;
+      return {
+        ...state,
+        tournaments: remainingTournaments,
+      };
+
+    case "ADD_TOURNAMENT_PHASE":
+      const { tournamentId: tId, phase } = action.payload;
+      const tournament = state.tournaments[tId];
+      return {
+        ...state,
+        tournaments: {
+          ...state.tournaments,
+          [tId]: {
+            ...tournament,
+            phases: [...(tournament.phases || []), phase],
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      };
+
+    case "UPDATE_TOURNAMENT_PHASE":
+      const { tournamentId: tourId, phaseId, phaseData } = action.payload;
+      const tourUpdated = state.tournaments[tourId];
+      return {
+        ...state,
+        tournaments: {
+          ...state.tournaments,
+          [tourId]: {
+            ...tourUpdated,
+            phases: tourUpdated.phases.map((p) =>
+              p.id === phaseId ? { ...p, ...phaseData } : p
+            ),
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      };
+
+    case "ADD_TOURNAMENT_GAME":
+      const { tournamentId: tournId, phaseId: pId, game } = action.payload;
+      const tourn = state.tournaments[tournId];
+      return {
+        ...state,
+        tournaments: {
+          ...state.tournaments,
+          [tournId]: {
+            ...tourn,
+            phases: tourn.phases.map((p) =>
+              p.id === pId
+                ? { ...p, games: [...(p.games || []), game] }
+                : p
+            ),
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      };
+
+    case "UPDATE_TOURNAMENT_GAME":
+      const { tournamentId: trnId, phaseId: phId, gameId, gameData } =
+        action.payload;
+      const trn = state.tournaments[trnId];
+      return {
+        ...state,
+        tournaments: {
+          ...state.tournaments,
+          [trnId]: {
+            ...trn,
+            phases: trn.phases.map((p) =>
+              p.id === phId
+                ? {
+                    ...p,
+                    games: p.games.map((g) =>
+                      g.id === gameId ? { ...g, ...gameData } : g
+                    ),
+                  }
+                : p
+            ),
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      };
+
+    case "SET_CURRENT_TOURNAMENT":
+      return {
+        ...state,
+        currentTournament: action.payload,
+      };
+
+    case "SET_CURRENT_TOURNAMENT_GAME":
+      return {
+        ...state,
+        currentTournamentGame: action.payload,
+      };
+
+    case "SET_TOURNAMENTS":
+      return {
+        ...state,
+        tournaments: action.payload,
       };
 
     default:

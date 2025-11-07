@@ -49,11 +49,7 @@ const GameScreen = () => {
 
     if (answerIndex === state.currentQuestion.correct) {
       dispatch({ type: "UPDATE_SCORE", payload: 1 });
-      dispatch({ type: "SET_CELEBRATION", payload: "🎉" });
-      setTimeout(
-        () => dispatch({ type: "SET_CELEBRATION", payload: null }),
-        2000
-      );
+      // Celebration animations removed as per requirements
     } else {
       setTimeout(() => {
         dispatch({ type: "SHOW_EXPLANATION" });
@@ -370,10 +366,7 @@ const GameScreen = () => {
         </div>
       </div>
 
-      {/* Celebration */}
-      {state.celebration && (
-        <div className="celebration">{state.celebration}</div>
-      )}
+      {/* Celebration removed as per requirements */}
     </div>
   );
 };
