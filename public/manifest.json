@@ -1,0 +1,27 @@
+{
+  "name": "Islamic Quiz Platform",
+  "short_name": "Islamic Quiz",
+  "description": "Interactive Islamic knowledge quiz platform",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#2d5016",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["education", "lifestyle"],
+  "lang": "ar",
+  "dir": "rtl"
+}
