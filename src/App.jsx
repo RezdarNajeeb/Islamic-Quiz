@@ -7,6 +7,7 @@ import TeamSetupScreen from "./components/screens/TeamSetupScreen";
 import GameScreen from "./components/screens/GameScreen";
 import TiebreakerScreen from "./components/screens/TiebreakerScreen";
 import ResultsScreen from "./components/screens/ResultsScreen";
+import TournamentSelectionScreen from "./components/screens/TournamentSelectionScreen";
 import AdminLogin from "./components/admin/AdminLogin";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import "./styles/styles.css";
@@ -18,6 +19,8 @@ const AppContent = () => {
     switch (state.currentScreen) {
       case "teamSetup":
         return <TeamSetupScreen />;
+      case "tournamentSelection":
+        return <TournamentSelectionScreen />;
       case "game":
         return <GameScreen />;
       case "tiebreaker":
